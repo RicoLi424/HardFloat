@@ -40,7 +40,7 @@ module
         output signed [(expWidth + 1):0] out_sExp,
         output [(sigWidth + 2):0] out_sig
     );
-`include "HardFloat_localFuncs.vi"
+    `include "HardFloat_localFuncs.vi"
 
     /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
@@ -115,7 +115,7 @@ module
     wire entering = inReady && inValid;
     wire entering_normalCase = entering && normalCase_S;
     wire skipCycle2 = (cycleNum == 4) && sigX_Z[sigWidth + 1];  
-	wire step1Case = skipCycle2 || (cycleNum <= 2);
+    wire step1Case = skipCycle2 || (cycleNum <= 2);
 
     always @(posedge clock) begin
         if (!nReset) begin
@@ -126,9 +126,9 @@ module
                       (entering && !normalCase_S ? 1 : 0)
                     | (entering_normalCase
                            ? (sqrtOp ? (sExpA_S[0] ? sigWidth : sigWidth + 1)
-                                  : sigWidth + 2)
+                                     : sigWidth + 2)
                            : 0)
-				    | (!idle ? (cycleNum - (step1Case ? 1 : 2)) : 0);
+		    | (!idle ? (cycleNum - (step1Case ? 1 : 2)) : 0);
             end 
         end
     end
@@ -158,9 +158,8 @@ module
             sign_Z <= sign_S;
         end
         if (entering_normalCase) begin
-            sExp_Z <=
-                sqrtOp ? (sExpA_S>>>1) + (1<<(expWidth - 1))
-                    : sSatExpQuot_S_div;
+            sExp_Z <= sqrtOp ? (sExpA_S>>>1) + (1<<(expWidth - 1))
+                             : sSatExpQuot_S_div;
             roundingMode_Z <= roundingMode;
         end
 		
@@ -173,14 +172,14 @@ module
     /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
     wire [1:0] decHiSigA_S = sigA_S[(sigWidth - 1):(sigWidth - 2)] - 1;
-	wire [(sigWidth + 2):0] rem = inReady ? 
-									(oddSqrt_S ? 
-										{decHiSigA_S, sigA_S[(sigWidth - 3):0], 3'b0}
-										: sigA_S<<1)
-									: rem_Z<<1;
+    wire [(sigWidth + 2):0] rem = inReady ? 
+				    (oddSqrt_S ? 
+					{decHiSigA_S, sigA_S[(sigWidth - 3):0], 3'b0}
+					: sigA_S<<1)
+				    : rem_Z<<1;
     wire [sigWidth:0] bitMask = ({{(sigWidth + 2){1'b0}}, 1'b1}<<cycleNum)>>2;
-	wire [sigWidth:0] bitMaskNext = bitMask>>1;	
-	/*------------------------------------------------------------------------
+    wire [sigWidth:0] bitMaskNext = bitMask>>1;	
+    /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
 	
 	wire loadDiv = inReady && !sqrtOp;
@@ -188,8 +187,7 @@ module
 	wire loadOddSqrt = inReady && oddSqrt_S;
 	wire calc = !inReady;
 	wire calcDiv = calc && !sqrtOp_Z;
-	wire calcSqrt = calc && sqrtOp_Z;
-	
+	wire calcSqrt = calc && sqrtOp_Z;	
     /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
 	wire [(sigWidth + 1):0] trialTerm;
@@ -216,20 +214,19 @@ module
 			.sel_one_hot_i(trialTermSel),
 			.data_o(trialTerm)
 		);
-	/*------------------------------------------------------------------------
+    /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
 		
     wire signed [(sigWidth + 3):0] trialRem1 = rem - trialTerm;
 	wire newBit1 = (0 <= trialRem1);
 	wire [(sigWidth + 1):0] sigXNext = sigX_Z | (newBit1 ? bitMask : 0);
 	wire [(sigWidth + 1):0] trialTermNext = sqrtOp_Z ? 
-											sigXNext<<1 | bitMaskNext
-									       :trialTerm;
+		                                   sigXNext<<1 | bitMaskNext
+					          :trialTerm;
 	wire [(sigWidth + 2):0] remNext = (newBit1 ? (trialRem1[(sigWidth + 1):0]) : (rem[(sigWidth + 1):0]))<<1;
 	wire signed [(sigWidth + 3):0] trialRem2 = remNext - trialTermNext ;
-	wire newBit2 = (0 <= trialRem2);
-	
-	/*------------------------------------------------------------------------
+	wire newBit2 = (0 <= trialRem2);	
+    /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
 
 	wire [(sigWidth + 1):0] sigX_N;
@@ -252,9 +249,8 @@ module
 			.data_i(sigX_NMuxIn),
 			.sel_one_hot_i(sigX_NSel),
 			.data_o(sigX_N)
-		);
-	
-	/*------------------------------------------------------------------------
+		);	
+    /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
 	
     always @(posedge clock) begin
@@ -271,7 +267,7 @@ module
 
         if (entering_normalCase || (!inReady && (newBit1 | newBit2))) begin
             notZeroRem_Z <= (trialRem1 != 0 && trialRem2 != 0);
-			sigX_Z       <=  sigX_N;
+	    sigX_Z       <=  sigX_N;
         end
 
       end
@@ -291,7 +287,6 @@ module
     assign out_sig    = {sigX_Z, notZeroRem_Z};
 
 endmodule
-
 /*----------------------------------------------------------------------------
 *----------------------------------------------------------------------------*/
 
